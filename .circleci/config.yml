@@ -45,4 +45,3 @@ workflows:
 			- docker-build:
 					requires:
 						- build-and-test
-            
