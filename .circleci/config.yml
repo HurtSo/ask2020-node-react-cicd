@@ -1,45 +1,60 @@
 version: 2.1
 orbs:
- node: circleci/node@1.6
+  node: circleci/node@1.1.6
 jobs:
- build-and-test:
-  executor:
-   name: node/default
-  steps:
-   - checkout
-   - run:
-    command: npm install
-    working_directory: ./server
-   - run:
-    command: npm install
-    working_directory: ./client
-   - run:
-    command: npm test
-    working_directory: ./server
-   - run:
-    command: npm test
-    working_directory: ./client
-docker-build:
- machine: true
- steps:
-  - checkout
-  - run: echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-  - run: 
-   command: |
-    TAG=0.1$CIRCLE_BUILD_NUM
-    docker build -t filipbazludowski/cicd-server:$TAG
-    docker push filipbazludowski/cicd-server:$TAG
-   working_directory: ./server
-  - run: 
-   command: |
-    TAG=0.1$CIRCLE_BUILD_NUM
-    docker build -t filipbazludowski/cicd-client:$TAG
-    docker push filipbazludowski/cicd-client:$TAG
-   working_directory: ./client
+  build-and-test-server:
+    executor:
+      name: node/default
+    steps:
+      - checkout
+      - run:
+          command: npm install
+          working_directory: ./server
+      - run:
+          command: npm test
+          working_directory: ./server
+  build-and-test-client:
+    executor:
+      name: node/default
+    steps:
+      - checkout
+      - run:
+          command: npm install
+          working_directory: ./client
+      - run:
+          command: npm test
+          working_directory: ./client
+  docker-build:
+    machine: true
+    steps:
+      - checkout
+      - run: echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+      - run: 
+          command: |
+            TAG=0.1.$CIRCLE_BUILD_NUM
+            docker build -t stochel/cicd-server:$TAG .
+            docker push stochel/cicd-server:$TAG
+          working_directory: ./server
+      - run: 
+          command: |
+            TAG=0.1.$CIRCLE_BUILD_NUM
+            docker build -t stochel/cicd-client:$TAG .
+            docker push stochel/cicd-client:$TAG
+          working_directory: ./client
 workflows:
- build-and-test:
-  jobs:
-   - build-and-test
-   - docker-build:
-    requires:
-     - build-and-test
+    build-and-test:
+      jobs:
+        - build-and-test-server:
+          filters:
+            branches:
+              only:
+                - master
+        - build-and-test-client:
+          filters:
+            branches:
+              only:
+                - master
+        - docker-build:
+            requires:
+              - build-and-test-server
+              - build-and-test-client
