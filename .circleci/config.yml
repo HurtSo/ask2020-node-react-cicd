@@ -32,29 +32,20 @@ jobs:
       - run: 
           command: |
             TAG=0.1.$CIRCLE_BUILD_NUM
-            docker build -t stochel/cicd-server:$TAG .
-            docker push stochel/cicd-server:$TAG
+            docker build -t filipbazludowski/cicd-server:$TAG .
+            docker push filipbazludowski/cicd-server:$TAG
           working_directory: ./server
       - run: 
           command: |
             TAG=0.1.$CIRCLE_BUILD_NUM
-            docker build -t stochel/cicd-client:$TAG .
-            docker push stochel/cicd-client:$TAG
+            docker build -t filipbazludowski/cicd-client:$TAG .
+            docker push filipbazludowski/cicd-client:$TAG
           working_directory: ./client
 workflows:
     build-and-test:
       jobs:
-        - build-and-test-server:
-          filters:
-            branches:
-              only:
-                - master
-        - build-and-test-client:
-          filters:
-            branches:
-              only:
-                - master
+        - build-and-test-server
         - docker-build:
             requires:
-              - build-and-test-server
-              - build-and-test-client
+              - build-and-test
+             
